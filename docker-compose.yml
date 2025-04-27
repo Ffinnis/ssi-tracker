@@ -15,6 +15,17 @@ services:
     depends_on:
       - postgres
 
+  frontend: # Added frontend service
+    build: ./frontend
+    container_name: nextjs-frontend
+    ports:
+      - "3000:3000" # Default Next.js port
+    environment:
+      # Tell frontend where the backend is within the Docker network
+      - NEXT_PUBLIC_API_URL=http://localhost:4444
+    depends_on:
+      - backend # Ensure backend starts first
+
   postgres:
     image: postgres:16
     container_name: postgres-db

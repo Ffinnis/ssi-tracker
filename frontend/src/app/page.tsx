@@ -1,103 +1,325 @@
-import Image from "next/image";
+"use client"; // Add this directive for client-side hooks
+
+import React, { useEffect, useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"; // Import shadcn table components
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from "@/components/ui/chart";
+import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts";
+
+// Define the structure of the SSI score data
+interface SsiScore {
+  id: number;
+  ssi_overall_score: number;
+  establish_your_professional_brand: number;
+  find_the_right_people: number;
+  engage_with_insights: number;
+  build_relationships: number;
+  date_created: string; // Keep as string initially, format later
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [ssiScores, setSsiScores] = useState<SsiScore[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  // Define type for chart data
+  interface ChartDataPoint {
+    date: string;
+    overall: number;
+    brand: number;
+    people: number;
+    insights: number;
+    relationships: number;
+  }
+
+  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
+
+  useEffect(() => {
+    const fetchSsiScores = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Use the backend service name if running in Docker, otherwise localhost
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        console.log(`Fetching data from: ${apiUrl}`); // Log the API URL
+        const response = await fetch(`${apiUrl}/ssi`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data: SsiScore[] = await response.json();
+        setSsiScores(data);
+      } catch (e: unknown) {
+        // Changed 'any' to 'unknown'
+        console.error("Failed to fetch SSI scores:", e);
+        let errorMessage = "An unknown error occurred";
+        if (e instanceof Error) {
+          // Check if e is an Error instance
+          errorMessage = e.message;
+        }
+        setError(
+          `Failed to fetch SSI scores: ${errorMessage}. Is the backend running at ${process.env.NEXT_PUBLIC_API_URL}?`
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSsiScores();
+  }, []); // Empty dependency array means this runs once on mount
+
+  // Process data for charts when ssiScores changes
+  useEffect(() => {
+    if (ssiScores.length > 0) {
+      // Sort scores by date
+      const sortedScores = [...ssiScores].sort(
+        (a, b) =>
+          new Date(a.date_created).getTime() -
+          new Date(b.date_created).getTime()
+      );
+
+      // Create chart data
+      const data = sortedScores.map((score) => {
+        const date = new Date(score.date_created);
+        return {
+          date: date.toLocaleDateString(),
+          overall: score.ssi_overall_score,
+          brand: score.establish_your_professional_brand,
+          people: score.find_the_right_people,
+          insights: score.engage_with_insights,
+          relationships: score.build_relationships,
+        };
+      });
+
+      setChartData(data);
+    }
+  }, [ssiScores]);
+
+  // Chart configuration
+  const chartConfig = {
+    overall: {
+      label: "Overall Score",
+      color: "#2563eb", // Blue
+    },
+    brand: {
+      label: "Professional Brand",
+      color: "#16a34a", // Green
+    },
+    people: {
+      label: "Right People",
+      color: "#ea580c", // Orange
+    },
+    insights: {
+      label: "Insights",
+      color: "#8b5cf6", // Purple
+    },
+    relationships: {
+      label: "Relationships",
+      color: "#dc2626", // Red
+    },
+  };
+
+  // Helper function to format date
+  const formatDate = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    };
+    try {
+      return new Intl.DateTimeFormat("en-US", options).format(
+        new Date(dateString)
+      );
+    } catch (e) {
+      console.error("Error formatting date:", dateString, e);
+      return "Invalid Date";
+    }
+  };
+
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">SSI Scores Dashboard</h1>
+      {loading && <p>Loading scores...</p>}
+      {error && <p className="text-red-500">{error}</p>}
+      {!loading && !error && (
+        <>
+          {/* Charts Section */}
+          <div className="mb-8">
+            {/* Overall Score Chart */}
+            <Card className="mb-6">
+              <CardHeader className="pb-2">
+                <CardTitle>SSI Score Growth</CardTitle>
+                <CardDescription>
+                  Tracking the growth of your SSI scores over time
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[400px] w-full">
+                  {chartData.length > 0 && (
+                    <ChartContainer config={chartConfig}>
+                      <LineChart
+                        data={chartData}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
+                      >
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="rgba(0,0,0,0.1)"
+                        />
+                        <XAxis
+                          dataKey="date"
+                          tickLine={false}
+                          axisLine={false}
+                          padding={{ left: 10, right: 10 }}
+                        />
+                        <YAxis
+                          tickLine={false}
+                          axisLine={false}
+                          domain={[0, 100]}
+                          width={40}
+                        />
+                        <ChartTooltip
+                          content={<ChartTooltipContent />}
+                          cursor={{ strokeDasharray: "3 3" }}
+                        />
+                        <ChartLegend
+                          content={<ChartLegendContent />}
+                          verticalAlign="bottom"
+                          height={36}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="overall"
+                          stroke="var(--color-overall)"
+                          strokeWidth={3}
+                          dot={{ r: 5, strokeWidth: 2 }}
+                          activeDot={{ r: 7 }}
+                          isAnimationActive={true}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="brand"
+                          stroke="var(--color-brand)"
+                          strokeWidth={3}
+                          dot={{ r: 5, strokeWidth: 2 }}
+                          activeDot={{ r: 7 }}
+                          isAnimationActive={true}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="people"
+                          stroke="var(--color-people)"
+                          strokeWidth={3}
+                          dot={{ r: 5, strokeWidth: 2 }}
+                          activeDot={{ r: 7 }}
+                          isAnimationActive={true}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="insights"
+                          stroke="var(--color-insights)"
+                          strokeWidth={3}
+                          dot={{ r: 5, strokeWidth: 2 }}
+                          activeDot={{ r: 7 }}
+                          isAnimationActive={true}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="relationships"
+                          stroke="var(--color-relationships)"
+                          strokeWidth={3}
+                          dot={{ r: 5, strokeWidth: 2 }}
+                          activeDot={{ r: 7 }}
+                          isAnimationActive={true}
+                        />
+                      </LineChart>
+                    </ChartContainer>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle>SSI Scores Table</CardTitle>
+              <CardDescription>
+                A list of your recent SSI scores
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[100px]">ID</TableHead>
+                    <TableHead>Overall</TableHead>
+                    <TableHead>Brand</TableHead>
+                    <TableHead>People</TableHead>
+                    <TableHead>Insights</TableHead>
+                    <TableHead>Relationships</TableHead>
+                    <TableHead className="text-right">Date Created</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {ssiScores.length > 0 ? (
+                    ssiScores.map((score) => (
+                      <TableRow key={score.id}>
+                        <TableCell className="font-medium">
+                          {score.id}
+                        </TableCell>
+                        <TableCell>
+                          {score.ssi_overall_score.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          {score.establish_your_professional_brand.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          {score.find_the_right_people.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          {score.engage_with_insights.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          {score.build_relationships.toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatDate(score.date_created)}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center">
+                        No scores found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 }
