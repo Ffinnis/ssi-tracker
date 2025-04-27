@@ -23,7 +23,14 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from "@/components/ui/chart";
-import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import {
+  Line,
+  LineChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  ResponsiveContainer, // Import ResponsiveContainer
+} from "recharts";
 
 // Define the structure of the SSI score data
 interface SsiScore {
@@ -175,8 +182,9 @@ export default function Home() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-[400px] w-full">
-                  {chartData.length > 0 && (
+                {/* Replace div with ResponsiveContainer */}
+                <ResponsiveContainer width="100%" height={800}>
+                  {chartData.length > 0 ? ( // Check chartData length before rendering ChartContainer
                     <ChartContainer config={chartConfig}>
                       <LineChart
                         data={chartData}
@@ -202,10 +210,11 @@ export default function Home() {
                           content={<ChartTooltipContent />}
                           cursor={{ strokeDasharray: "3 3" }}
                         />
+                        {/* Reverted: Legend back inside LineChart */}
                         <ChartLegend
                           content={<ChartLegendContent />}
-                          verticalAlign="bottom"
-                          height={36}
+                          verticalAlign="bottom" // Restored prop
+                          height={36} // Restored prop
                         />
                         <Line
                           type="monotone"
@@ -254,8 +263,10 @@ export default function Home() {
                         />
                       </LineChart>
                     </ChartContainer>
+                  ) : (
+                    <div>Loading chart data...</div> // Optional: Add a placeholder
                   )}
-                </div>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
           </div>
