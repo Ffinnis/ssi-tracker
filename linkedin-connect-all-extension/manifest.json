@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "LinkedIn Connect All",
+  "version": "1.0",
+  "description": "Adds a 'Connect All' button to LinkedIn search results and automates connection requests.",
+  "permissions": [
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://www.linkedin.com/search/results/people*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://www.linkedin.com/search/results/people*"],
+      "js": ["content.js"]
+    }
+  ]
+}

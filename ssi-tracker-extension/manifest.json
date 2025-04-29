@@ -3,6 +3,11 @@
   "name": "LinkedIn SSI Parser",
   "version": "1.0",
   "description": "Automatically navigates to LinkedIn SSI page and parses the SSI value.",
+  "icons": {
+    "16": "logo.png",
+    "48": "logo.png",
+    "128": "logo.png"
+  },
   "permissions": ["scripting", "tabs"],
   "host_permissions": [
     "https://www.linkedin.com/sales/ssi*",
@@ -17,6 +22,7 @@
   ],
   "action": {
     "default_title": "LinkedIn SSI Parser",
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": "logo.png"
   }
 }
