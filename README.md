@@ -7,6 +7,7 @@ A project for managing and visualizing Self-Sovereign Identity (SSI) scores. It 
 - **`backend/`**: A Node.js service providing the core API for managing SSI scores.
 - **`frontend/`**: A Next.js web application for visualizing and interacting with SSI scores.
 - **`ssi-tracker-extension/`**: A browser extension for interacting with Linkedin.
+  **`linkedin-connect-all-extension/`**: A Chrome extension that adds a "Connect All" button to LinkedIn search results pages to automate sending connection requests.
 
 ## Getting Started
 
